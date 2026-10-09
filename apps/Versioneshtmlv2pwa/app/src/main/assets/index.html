@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Prototipos por Versión</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0f14">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0; padding: 76px 12px 260px 12px;
+    background: #0f1419; color: #e2e8f0; font-size: 14px;
+    overflow-y: auto;
+  }
+  body.preview-fullscreen { overflow: hidden; }
+
+  /* ===== BARRA SUPERIOR FIJA ===== */
+  #topBar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #0a0f14;
+    border-bottom: 1px solid #2d3748;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.7);
+    min-height: 60px;
+  }
+  .top-bar-icon { font-size: 18px; flex-shrink: 0; }
+  .top-bar-select {
+    flex: 1;
+    background: transparent;
+    color: #60a5fa;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    padding: 6px 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 0;
+    cursor: pointer;
+    font-family: ui-monospace, monospace;
+  }
+  .top-bar-select:focus { outline: none; }
+  .top-bar-status {
+    display: flex; align-items: center;
+    font-size: 11px; color: #94a3b8;
+    white-space: nowrap; flex-shrink: 0;
+  }
+
+  select, input[type="text"] {
+    background: #1f2937; color: #e2e8f0; border: 1px solid #374151;
+    border-radius: 8px; padding: 10px; font-size: 14px; width: 100%;
+  }
+
+  textarea {
+    width: 100%; height: 240px; padding: 10px; border-radius: 8px;
+    background: #1a2128; color: #e2e8f0; border: 1px solid #374151;
+    font-family: ui-monospace, monospace; font-size: 13px; resize: vertical;
+    line-height: 1.4;
+  }
+  textarea[readonly] {
+    background: #131820; color: #cbd5e1; border-color: #2d3748;
+    cursor: default;
+  }
+  h3 {
+    margin: 12px 0 4px; font-size: 12px; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .info {
+    font-size: 12px; color: #94a3b8; padding: 4px 2px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #666;
+    display: inline-block; margin-right: 4px;
+  }
+  .status-dot.saved { background: #4ade80; }
+  .status-dot.saving { background: #facc15; }
+  .status-dot.error { background: #f87171; }
+
+  /* =========================================================
+     TARJETA DE VISTA PREVIA (modo normal)
+     ========================================================= */
+  .preview-container {
+    position: relative;
+    background: #0a0f14;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    transition: border-radius 0.2s ease;
+  }
+  .preview-body {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: #fff;
+  }
+  #preview {
+    width: 100%; height: 100%;
+    border: none;
+    background: #fff;
+    display: block;
+  }
+
+  /* Botón "Ver en grande" (solo en modo tarjeta) */
+  .open-full-btn {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    background: rgba(10,15,20,0.92);
+    color: #fff;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 14px rgba(59,130,246,0.45);
+    z-index: 5;
+    display: flex; align-items: center; gap: 6px;
+    font-family: inherit;
+  }
+  .open-full-btn:active { background: #3b82f6; }
+
+  /* Botón "Modo" (solo en modo tarjeta) */
+  .mode-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(10,15,20,0.88);
+    color: #60a5fa;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    z-index: 5;
+    font-family: inherit;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .mode-btn:active { background: #1f2937; }
+
+  /* ===== ESTADO FULLSCREEN ===== */
+  .preview-container.fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    border-radius: 0;
+    border: none;
+    width: 100vw;
+    height: 100vh;
+    box-shadow: none;
+  }
+  .preview-container.fullscreen .preview-body { height: 100%; }
+  .preview-container.fullscreen .open-full-btn { display: none; }
+  .preview-container.fullscreen .mode-btn { display: none; }
+
+  /* =========================================================
+     HINT DE SALIDA (autooculta)
+     ========================================================= */
+  .preview-exit-hint {
+    display: none;
+    position: fixed;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 212;
+    background: rgba(10, 15, 20, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #e2e8f0;
+    border: 1px solid rgba(96, 165, 250, 0.5);
+    border-radius: 999px;
+    padding: 11px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  body.preview-fullscreen .preview-exit-hint { display: block; }
+  body.preview-fullscreen .preview-exit-hint.visible { opacity: 1; }
+
+  /* =========================================================
+     PROGRESO DE TAPS (3 puntos)
+     ========================================================= */
+  .preview-tap-progress {
+    display: none;
+    position: fixed;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 213;
+    background: rgba(10, 15, 20, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(96, 165, 250, 0.55);
+    border-radius: 999px;
+    padding: 12px 18px;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  body.preview-fullscreen .preview-tap-progress.visible {
+    display: flex;
+    opacity: 1;
+  }
+  .preview-tap-progress .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #60a5fa;
+    background: transparent;
+    transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .preview-tap-progress .dot.filled {
+    background: #60a5fa;
+    transform: scale(1.2);
+    box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
+  }
+  .preview-tap-progress .label {
+    color: #60a5fa;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    margin-left: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== TARJETA INFO DE LA VERSIÓN ===== */
+  .version-info-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    background: #0a0f14;
+    border: 1px solid #2d3748;
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+  .version-info-card .icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    border: 1px solid #60a5fa;
+  }
+  .version-info-card .info-txt { flex: 1; min-width: 0; }
+  .version-info-card .info-txt .name {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    color: #60a5fa;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .version-info-card .info-txt .stats {
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: ui-monospace, monospace;
+    margin-top: 3px;
+  }
+
+  /* ===== BARRA INFERIOR FIJA ===== */
+  .bottom-dock {
+    position: fixed; bottom: 0; left: 0; right: 0; width: 100%;
+    background: #0a0f14; border-top: 1px solid #2d3748;
+    z-index: 50; box-shadow: 0 -4px 15px rgba(0,0,0,0.7);
+    display: flex; flex-direction: column;
+    will-change: bottom;
+  }
+
+  .quick-bar-row {
+    padding: 6px 8px;
+    background: #0d1219;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .quick-bar-row input {
+    height: 42px; margin: 0; padding: 6px 12px;
+    font-size: 14px; border-color: #3b82f6; background: #1a2028;
+  }
+
+  .bar-row {
+    display: flex; gap: 6px; padding: 8px 10px; width: 100%;
+    align-items: center; justify-content: space-between;
+  }
+  .bar-row + .bar-row { border-top: 1px solid rgba(255,255,255,0.05); }
+
+  .dock-btn {
+    flex: 1; padding: 12px 4px; font-size: 13px; font-weight: 600;
+    border-radius: 8px; border: 1px solid #4a5568; background: #1f2937; color: #e2e8f0;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;
+    white-space: nowrap;
+  }
+  .dock-btn:active { background: #374151; transform: scale(0.98); }
+
+  .dock-btn.mega-primary {
+    flex: 1;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-color: #60a5fa; color: #fff;
+    font-size: 15px; font-weight: 700; padding: 14px 6px;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.45);
+  }
+  .dock-btn.mega-primary:active {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+  }
+
+  .dock-btn.danger { background: #7f1d1d; border-color: #991b1b; color: #fca5a5; }
+  .dock-btn.danger:active { background: #991b1b; }
+
+  .dock-btn.warn { background: #334155; border-color: #475569; color: #cbd5e1; }
+  .dock-btn.warn:active { background: #475569; }
+
+  .fab {
+    position: fixed;
+    bottom: 210px;
+    right: 16px;
+    z-index: 60;
+    width: 58px; height: 58px; border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff; font-size: 26px;
+    border: 2px solid #60a5fa;
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.6);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s ease;
+    padding: 0;
+    will-change: bottom;
+  }
+  .fab:active { transform: scale(0.92); }
+  .fab-label {
+    position: absolute;
+    bottom: -18px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; color: #60a5fa; font-weight: 800;
+    background: #0a0f14; padding: 1px 5px; border-radius: 4px;
+    border: 1px solid #2d3748; white-space: nowrap;
+  }
+
+  /* ===== MODALES ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(5,8,12,0.88);
+    z-index: 300; padding: 16px;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal-content {
+    background: #1a2128; width: 100%; max-width: 520px; border-radius: 12px;
+    padding: 16px; border: 1px solid #4a5568;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-title {
+    color: #60a5fa; font-size: 15px; margin: 0 0 12px 0;
+    text-transform: none; letter-spacing: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .modal-label {
+    display: block; font-size: 11px; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 10px 0 4px;
+  }
+  .modal-hint { font-size: 11px; color: #64748b; margin-top: 4px; line-height: 1.4; }
+  .modal-content textarea { height: 180px; margin: 0; }
+  .modal-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .modal-row button {
+    flex: 1; min-width: 45%; padding: 13px; border-radius: 8px;
+    font-weight: bold; border: 1px solid #4a5568; background: #1f2937;
+    color: #fff; cursor: pointer; font-size: 14px;
+  }
+  .btn-primario {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    border-color: #60a5fa !important;
+  }
+
+  .nombre-row { display: flex; gap: 8px; align-items: stretch; }
+  .nombre-row input { flex: 1; }
+  .btn-editar-nombre {
+    flex-shrink: 0;
+    background: #1f2937; color: #60a5fa;
+    border: 1px solid #3b82f6; border-radius: 8px;
+    padding: 0 14px; font-size: 13px; font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-editar-nombre:active { background: #374151; }
+
+  #nombreNuevoPedazo[readonly] {
+    background: #131820;
+    color: #60a5fa;
+    border-color: #2d3748;
+    cursor: default;
+  }
+
+  body.teclado-abierto .modal-overlay.visible {
+    align-items: flex-start;
+    padding-top: 12px;
+  }
+</style>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+</head>
+<body>
+
+<!-- ===== BARRA SUPERIOR FIJA ===== -->
+<header id="topBar">
+  <span class="top-bar-icon">📦</span>
+  <select id="fileSelect" onchange="cambiarPedazo()" class="top-bar-select">
+    <option value="">— Sin prototipos —</option>
+  </select>
+  <span class="top-bar-status">
+    <span class="status-dot" id="saveStatus"></span>
+    <span id="saveText">Listo</span>
+  </span>
+</header>
+
+<div class="info" id="infoBar">
+  <span id="fileInfo">Sin carpeta abierta</span>
+</div>
+
+<!-- ===== VISTA PREVIA ===== -->
+<h3>Vista previa del prototipo</h3>
+<div class="preview-container" id="previewContainer">
+  <div class="preview-body">
+    <iframe id="preview" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+    <button class="mode-btn" id="btnModeToggle" onclick="alternarModoPreview()">👁 Completo</button>
+    <button class="open-full-btn" onclick="abrirPantallaPreview()">🔍 Ver en grande</button>
+  </div>
+</div>
+
+<!-- Tarjeta info de la versión actual -->
+<div class="version-info-card">
+  <div class="icon">📄</div>
+  <div class="info-txt">
+    <div class="name" id="vName">—</div>
+    <div class="stats" id="vStats">—</div>
+  </div>
+</div>
+
+<!-- =========================================================
+     OVERLAYS DEL MODO FULLSCREEN
+     ========================================================= -->
+
+<!-- Hint de salida -->
+<div class="preview-exit-hint" id="exitHint">👆 Toca 3 veces para salir</div>
+
+<!-- Progreso de taps -->
+<div class="preview-tap-progress" id="tapProgress">
+  <span class="dot"></span>
+  <span class="dot"></span>
+  <span class="dot"></span>
+  <span class="label" id="tapLabel">1/3</span>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabPegar" onclick="pegarPedazo()" title="Pegar una versión NUEVA">
+  📋
+  <span class="fab-label">NUEVA V</span>
+</button>
+
+<!-- BARRA INFERIOR FIJA -->
+<div class="bottom-dock" id="bottomDock">
+
+  <div class="quick-bar-row">
+    <input type="text" id="quickInput" placeholder="📋 Pega aquí una versión NUEVA de HTML…" autocomplete="off">
+  </div>
+
+  <div class="bar-row">
+    <button class="dock-btn" onclick="abrirCarpeta()">📂 Carpetas</button>
+    <button class="dock-btn" onclick="nuevoPedazoVacio()">➕ Nuevo</button>
+    <button class="dock-btn" onclick="moverPedazo(-1)" title="Subir versión">⬆️</button>
+    <button class="dock-btn" onclick="moverPedazo(1)" title="Bajar versión">⬇️</button>
+    <button class="dock-btn danger" onclick="eliminarPedazo()" title="Eliminar archivo">🗑️</button>
+  </div>
+
+  <div class="bar-row">
+    <button class="dock-btn" onclick="renombrarPedazo()">✏️ Renombrar</button>
+    <button class="dock-btn warn" onclick="limpiarPedazoActual()">🧹 Limpiar</button>
+  </div>
+
+  <div class="bar-row">
+    <button class="dock-btn mega-primary" onclick="pegarEnPedazoActual()">📥 Pegar en Actual</button>
+  </div>
+
+</div>
+
+<!-- ===== MODAL NUEVA VERSIÓN ===== -->
+<div id="modalNuevoPedazo" class="modal-overlay">
+  <div class="modal-content">
+    <h3 class="modal-title">📦 Nueva Versión</h3>
+
+    <label class="modal-label" for="nombreNuevoPedazo">Nombre del archivo</label>
+    <div class="nombre-row">
+      <input type="text" id="nombreNuevoPedazo" class="modal-input" readonly autocomplete="off" spellcheck="false">
+      <button type="button" class="btn-editar-nombre" id="btnEditarNombre" onclick="toggleEditarNombre()">✏️ Editar</button>
+    </div>
+    <div class="modal-hint">Se genera como <b>{carpeta}-vN</b>. Pulsa <b>✏️ Editar</b> si quieres cambiarlo.</div>
+
+    <label class="modal-label" for="contenidoNuevoPedazo">Contenido</label>
+    <textarea id="contenidoNuevoPedazo" readonly spellcheck="false"></textarea>
+
+    <div class="modal-row">
+      <button class="btn-primario" onclick="confirmarNuevoPedazo()">💾 Crear Versión</button>
+      <button onclick="cerrarModalNuevoPedazo()" style="background:#374151;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ESTADO GLOBAL
+   ========================================================= */
+let dirHandle    = null;
+let pedazosDir   = null;
+let pedazos      = [];
+let indiceActual = -1;
+let modoPreview    = 'completo';
+let enFullscreen   = false;
+
+/* Estado para el sistema de "3 toques para salir" */
+let tapCount   = 0;
+let tapTimer   = null;
+let hintTimer  = null;
+
+const NOMBRE_ORDEN    = '_orden.json';
+const CARPETA_PEDAZOS = 'prototipos';
+const LS_PREVIEW      = 'prototipos_modo_preview_v2';
+
+/* Config del sistema de toques */
+const TAPS_PARA_SALIR       = 3;
+const MS_ENTRE_TAPS         = 1500;
+const MS_HINT_VISIBLE       = 3500;
+
+/* =========================================================
+   APERTURA DE CARPETA
+   ========================================================= */
+async function abrirCarpeta() {
+  if (!window.showDirectoryPicker) {
+    alert('Tu navegador no soporta la API de Directorios.\nUsa Chrome, Edge o Kiwi Browser.');
+    return;
+  }
+  try {
+    dirHandle = await window.showDirectoryPicker();
+    pedazosDir = await dirHandle.getDirectoryHandle(CARPETA_PEDAZOS, { create: true });
+    await cargarTodo();
+    setEstado('saved', 'Carpeta abierta');
+  } catch (err) {
+    if (err.name !== 'AbortError') console.error(err);
+  }
+}
+
+/* =========================================================
+   ORDEN
+   ========================================================= */
+async function leerOrden() {
+  try {
+    const fh = await dirHandle.getFileHandle(NOMBRE_ORDEN);
+    const f  = await fh.getFile();
+    const arr = JSON.parse(await f.text());
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+async function guardarOrden() {
+  if (!dirHandle) return;
+  try {
+    const fh = await dirHandle.getFileHandle(NOMBRE_ORDEN, { create: true });
+    const w  = await fh.createWritable();
+    await w.write(JSON.stringify(pedazos.map(p => p.nombre), null, 2));
+    await w.close();
+  } catch (e) { console.error('No se pudo guardar el orden:', e); }
+}
+
+/* =========================================================
+   CARGA
+   ========================================================= */
+async function cargarTodo() {
+  if (!pedazosDir) return;
+
+  const orden = await leerOrden();
+  const nombres = [];
+  for await (const [name, handle] of pedazosDir.entries()) {
+    if (handle.kind === 'file') nombres.push(name);
+  }
+
+  const enOrden = orden.filter(n => nombres.includes(n));
+  const resto   = nombres.filter(n => !enOrden.includes(n)).sort();
+  const lista   = [...enOrden, ...resto];
+
+  pedazos = [];
+  for (const nombre of lista) {
+    try {
+      const handle = await pedazosDir.getFileHandle(nombre);
+      const file   = await handle.getFile();
+      const contenido = await file.text();
+      pedazos.push({ nombre, handle, contenido });
+    } catch (e) { console.error('Error leyendo', nombre, e); }
+  }
+
+  indiceActual = pedazos.length > 0 ? 0 : -1;
+  await guardarOrden();
+  refrescarTodo();
+}
+
+/* =========================================================
+   REFRESCO
+   ========================================================= */
+function refrescarTodo() {
+  actualizarSelect();
+  refrescarPreview();
+  actualizarInfo();
+  actualizarVersionCard();
+  actualizarBotonModoPreview();
+  programarAjusteTeclado();
+}
+
+function actualizarSelect() {
+  const sel = document.getElementById('fileSelect');
+  sel.innerHTML = '';
+  if (pedazos.length === 0) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = '— Sin prototipos —';
+    sel.appendChild(o);
+    return;
+  }
+  pedazos.forEach((p, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${String(i + 1).padStart(2, '0')}. ${p.nombre}`;
+    sel.appendChild(o);
+  });
+  if (indiceActual >= 0 && indiceActual < pedazos.length) sel.value = indiceActual;
+}
+
+function actualizarInfo() {
+  const totalLineas = pedazos.reduce(
+    (a, p) => a + (p.contenido ? p.contenido.split('\n').length : 0), 0
+  );
+  const carpeta = dirHandle ? dirHandle.name : '—';
+  const actual  = indiceActual >= 0 ? `${indiceActual + 1}/${pedazos.length}` : '0/0';
+  document.getElementById('fileInfo').textContent =
+    `📁 ${carpeta} · ${pedazos.length} versiones · ${totalLineas} líneas · viendo ${actual}`;
+}
+
+function actualizarVersionCard() {
+  const name = document.getElementById('vName');
+  const stats = document.getElementById('vStats');
+
+  if (indiceActual < 0 || !pedazos[indiceActual]) {
+    name.textContent = 'Sin versión seleccionada';
+    stats.textContent = '—';
+    return;
+  }
+
+  const p = pedazos[indiceActual];
+  const lineas = p.contenido ? p.contenido.split('\n').length : 0;
+  const chars = p.contenido ? p.contenido.length : 0;
+  name.textContent = p.nombre;
+  stats.textContent = `${lineas} líneas · ${chars.toLocaleString()} caracteres`;
+}
+
+/* =========================================================
+   GENERACIÓN DEL NOMBRE POR VERSIÓN
+   ========================================================= */
+function sanitizarNombre(n) {
+  n = (n || '').trim().replace(/[\\/:*?"<>|]/g, '-');
+  if (!n) return '';
+  if (!/\.[a-z0-9]+$/i.test(n)) n += '.html';
+  return n;
+}
+
+function baseNombrePrototipo() {
+  const bruto = dirHandle ? dirHandle.name : 'prototipo';
+  const base = bruto
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+  return base || 'prototipo';
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function siguienteNombrePedazo() {
+  const base = baseNombrePrototipo();
+  const re = new RegExp('^' + escapeRegex(base) + '-v(\\d+)(?:\\.html)?$', 'i');
+
+  let max = 0;
+  for (const p of pedazos) {
+    const m = p.nombre.match(re);
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `${base}-v${max + 1}`;
+}
+
+async function crearPedazo(nombre, contenido) {
+  if (!pedazosDir) { alert('Primero abre una carpeta.'); return false; }
+
+  nombre = sanitizarNombre(nombre);
+  if (!nombre) { alert('Nombre inválido.'); return false; }
+
+  const existentes = new Set(pedazos.map(p => p.nombre));
+  if (existentes.has(nombre)) {
+    const base = nombre.replace(/\.[a-z0-9]+$/i, '');
+    const ext  = (nombre.match(/\.[a-z0-9]+$/i) || ['.html'])[0];
+    let n = 2, candidato = nombre;
+    while (existentes.has(candidato)) {
+      candidato = `${base}-${n}${ext}`;
+      n++;
+    }
+    nombre = candidato;
+  }
+
+  try {
+    const handle = await pedazosDir.getFileHandle(nombre, { create: true });
+    const w = await handle.createWritable();
+    await w.write(contenido);
+    await w.close();
+
+    pedazos.push({ nombre, handle, contenido });
+    indiceActual = pedazos.length - 1;
+    await guardarOrden();
+    refrescarTodo();
+    return true;
+  } catch (e) {
+    console.error(e);
+    alert('No se pudo crear el archivo: ' + e.message);
+    return false;
+  }
+}
+
+/* =========================================================
+   MODAL NUEVA VERSIÓN
+   ========================================================= */
+function abrirModalNuevoPedazo(contenido) {
+  if (!dirHandle) {
+    alert('Primero abre una carpeta con el botón 📂 Carpetas.');
+    return;
+  }
+
+  const inpNombre = document.getElementById('nombreNuevoPedazo');
+  inpNombre.value = siguienteNombrePedazo();
+  inpNombre.readOnly = true;
+  document.getElementById('btnEditarNombre').textContent = '✏️ Editar';
+
+  const txtContenido = document.getElementById('contenidoNuevoPedazo');
+  txtContenido.value = contenido || '';
+  txtContenido.readOnly = true;
+
+  document.getElementById('modalNuevoPedazo').classList.add('visible');
+
+  setTimeout(() => {
+    document.getElementById('btnEditarNombre').blur();
+    document.activeElement && document.activeElement.blur();
+  }, 20);
+}
+
+function toggleEditarNombre() {
+  const inp = document.getElementById('nombreNuevoPedazo');
+  const btn = document.getElementById('btnEditarNombre');
+
+  if (inp.readOnly) {
+    inp.readOnly = false;
+    btn.textContent = '✅ Listo';
+    inp.focus();
+    inp.setSelectionRange(inp.value.length, inp.value.length);
+  } else {
+    inp.readOnly = true;
+    btn.textContent = '✏️ Editar';
+    inp.blur();
+  }
+}
+
+function cerrarModalNuevoPedazo() {
+  const inp = document.getElementById('nombreNuevoPedazo');
+  inp.readOnly = true;
+  document.getElementById('btnEditarNombre').textContent = '✏️ Editar';
+  inp.blur();
+  document.getElementById('modalNuevoPedazo').classList.remove('visible');
+}
+
+async function confirmarNuevoPedazo() {
+  const nombre   = document.getElementById('nombreNuevoPedazo').value;
+  const contenido = document.getElementById('contenidoNuevoPedazo').value;
+
+  if (!contenido.trim()) { alert('El contenido está vacío.'); return; }
+
+  cerrarModalNuevoPedazo();
+  const ok = await crearPedazo(nombre, contenido);
+  if (ok) setEstado('saved', 'Versión creada');
+}
+
+/* =========================================================
+   CAMBIAR VERSIÓN
+   ========================================================= */
+async function cambiarPedazo() {
+  const val = document.getElementById('fileSelect').value;
+  indiceActual = val === '' ? -1 : parseInt(val, 10);
+  refrescarPreview();
+  actualizarInfo();
+  actualizarVersionCard();
+}
+
+/* =========================================================
+   FULLSCREEN CON "3 TOQUES PARA SALIR"
+   ========================================================= */
+function abrirPantallaPreview() {
+  enFullscreen = true;
+  tapCount = 0;
+
+  document.body.classList.add('preview-fullscreen');
+  document.getElementById('previewContainer').classList.add('fullscreen');
+
+  setTimeout(() => refrescarPreview(), 80);
+  setTimeout(mostrarHintSalida, 400);
+}
+
+function cerrarPantallaPreview() {
+  enFullscreen = false;
+  tapCount = 0;
+  if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+  if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+
+  document.body.classList.remove('preview-fullscreen');
+  document.getElementById('previewContainer').classList.remove('fullscreen');
+
+  ocultarHintSalida();
+  ocultarProgreso();
+
+  setTimeout(() => refrescarPreview(), 80);
+}
+
+/* -------- SISTEMA DE CONTEO DE TOQUES -------- */
+function registrarTap() {
+  if (!enFullscreen) return;
+
+  tapCount++;
+
+  if (tapCount >= TAPS_PARA_SALIR) {
+    mostrarProgreso(tapCount);
+    setTimeout(() => {
+      cerrarPantallaPreview();
+    }, 180);
+    return;
+  }
+
+  mostrarProgreso(tapCount);
+
+  if (tapTimer) clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => {
+    tapCount = 0;
+    ocultarProgreso();
+  }, MS_ENTRE_TAPS);
+}
+
+function mostrarProgreso(n) {
+  const prog = document.getElementById('tapProgress');
+  const dots = prog.querySelectorAll('.dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < n));
+
+  const label = document.getElementById('tapLabel');
+  if (label) {
+    if (n >= TAPS_PARA_SALIR) label.textContent = '✓';
+    else label.textContent = `${n}/${TAPS_PARA_SALIR}`;
+  }
+
+  prog.classList.add('visible');
+  ocultarHintSalida();
+}
+
+function ocultarProgreso() {
+  const prog = document.getElementById('tapProgress');
+  prog.classList.remove('visible');
+  prog.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
+}
+
+function mostrarHintSalida() {
+  if (!enFullscreen) return;
+  const hint = document.getElementById('exitHint');
+  hint.classList.add('visible');
+
+  if (hintTimer) clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    hint.classList.remove('visible');
+  }, MS_HINT_VISIBLE);
+}
+
+function ocultarHintSalida() {
+  const hint = document.getElementById('exitHint');
+  hint.classList.remove('visible');
+  if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+}
+
+/* -------- TOQUES DENTRO DEL IFRAME (vía postMessage) -------- */
+window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'preview-tap') return;
+  if (!enFullscreen) return;
+  registrarTap();
+});
+
+/* -------- TOQUES FUERA DEL IFRAME -------- */
+document.addEventListener('click', (e) => {
+  if (!enFullscreen) return;
+  const t = e.target;
+  if (t.tagName === 'IFRAME') return;
+  if (t.closest && (t.closest('.preview-exit-hint') || t.closest('.preview-tap-progress'))) return;
+  registrarTap();
+}, true);
+
+/* =========================================================
+   OPERACIONES
+   ========================================================= */
+async function nuevoPedazoVacio() {
+  if (!dirHandle) { alert('Primero abre una carpeta.'); return; }
+  const ok = await crearPedazo(siguienteNombrePedazo(), '');
+  if (ok) setEstado('saved', 'Versión vacía creada');
+}
+
+async function renombrarPedazo() {
+  if (indiceActual < 0) { alert('No hay versión seleccionada.'); return; }
+
+  const p = pedazos[indiceActual];
+  let nombre = prompt('Nuevo nombre de la versión:', p.nombre);
+  if (nombre === null) return;
+
+  nombre = sanitizarNombre(nombre);
+  if (!nombre || nombre === p.nombre) return;
+
+  if (pedazos.some((x, i) => i !== indiceActual && x.nombre === nombre)) {
+    alert('Ya existe una versión con ese nombre.');
+    return;
+  }
+
+  try {
+    const nuevoHandle = await pedazosDir.getFileHandle(nombre, { create: true });
+    const w = await nuevoHandle.createWritable();
+    await w.write(p.contenido);
+    await w.close();
+
+    try { await pedazosDir.removeEntry(p.nombre); } catch (e) { console.warn(e); }
+
+    p.nombre = nombre;
+    p.handle = nuevoHandle;
+    await guardarOrden();
+    refrescarTodo();
+    setEstado('saved', 'Renombrado');
+  } catch (e) {
+    console.error(e);
+    alert('No se pudo renombrar: ' + e.message);
+  }
+}
+
+async function eliminarPedazo() {
+  if (indiceActual < 0) { alert('No hay versión seleccionada.'); return; }
+  const p = pedazos[indiceActual];
+  if (!confirm(`¿Eliminar la versión "${p.nombre}"?\n\nEsta acción borra el archivo del disco.`)) return;
+
+  try { await pedazosDir.removeEntry(p.nombre); } catch (e) { console.warn(e); }
+
+  pedazos.splice(indiceActual, 1);
+  if (indiceActual >= pedazos.length) indiceActual = pedazos.length - 1;
+  await guardarOrden();
+  refrescarTodo();
+  setEstado('saved', 'Versión eliminada');
+}
+
+async function moverPedazo(dir) {
+  if (indiceActual < 0) return;
+  const j = indiceActual + dir;
+  if (j < 0 || j >= pedazos.length) return;
+
+  [pedazos[indiceActual], pedazos[j]] = [pedazos[j], pedazos[indiceActual]];
+  indiceActual = j;
+  await guardarOrden();
+  refrescarTodo();
+}
+
+async function limpiarPedazoActual() {
+  if (indiceActual < 0 || indiceActual >= pedazos.length) {
+    alert('Selecciona primero una versión en la barra superior.');
+    return;
+  }
+  const p = pedazos[indiceActual];
+
+  if (!confirm(`⚠️ ¿Limpiar TODO el contenido de "${p.nombre}"?\n\nEl archivo seguirá existiendo pero vacío.`)) return;
+
+  p.contenido = '';
+
+  try {
+    const w = await p.handle.createWritable();
+    await w.write('');
+    await w.close();
+    setEstado('saved', 'Versión limpiada');
+  } catch (e) {
+    console.error(e);
+    setEstado('error', 'Error al limpiar');
+  }
+
+  refrescarPreview();
+  actualizarInfo();
+  actualizarVersionCard();
+}
+
+async function pegarEnPedazoActual() {
+  if (indiceActual < 0 || indiceActual >= pedazos.length) {
+    alert('Selecciona primero una versión en la barra superior.');
+    return;
+  }
+
+  let texto;
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      alert('Tu navegador no permite leer el portapapeles.');
+      return;
+    }
+    texto = await navigator.clipboard.readText();
+  } catch (e) {
+    alert('No se pudo leer el portapapeles.');
+    return;
+  }
+
+  if (!texto || !texto.trim()) {
+    alert('El portapapeles está vacío.');
+    return;
+  }
+
+  const p = pedazos[indiceActual];
+
+  if (p.contenido && p.contenido.trim() !== '') {
+    if (!confirm(`📥 ¿Pegar el portapapeles en "${p.nombre}"?\n\n⚠️ Esto reemplazará su contenido actual.`)) return;
+  }
+
+  p.contenido = texto;
+
+  try {
+    const w = await p.handle.createWritable();
+    await w.write(texto);
+    await w.close();
+    setEstado('saved', 'Pegado en versión actual');
+  } catch (e) {
+    console.error(e);
+    setEstado('error', 'Error al pegar');
+  }
+
+  refrescarPreview();
+  actualizarInfo();
+  actualizarVersionCard();
+}
+
+async function pegarPedazo() {
+  if (!dirHandle) { alert('Primero abre una carpeta con el botón 📂 Carpetas.'); return; }
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      alert('Tu navegador no permite leer el portapapeles.\nUsa el campo de arriba y pega ahí.');
+      return;
+    }
+    const texto = await navigator.clipboard.readText();
+    if (texto && texto.trim()) {
+      abrirModalNuevoPedazo(texto);
+    } else {
+      alert('El portapapeles está vacío.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('No se pudo leer el portapapeles.\nUsa el campo de texto de la barra inferior.');
+  }
+}
+
+/* =========================================================
+   VISTA PREVIA
+   ========================================================= */
+function inyectarTapListener(html) {
+  const script = '<script>(function(){'
+    + 'document.addEventListener("click",function(){'
+    + 'try{parent.postMessage({type:"preview-tap"},"*");}catch(e){}'
+    + '},true);'
+    + '})();<\/script>';
+
+  if (/<\/body\s*>/i.test(html)) {
+    return html.replace(/<\/body\s*>/i, script + '</body>');
+  }
+  return html + script;
+}
+
+function placeholderHTML() {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;
+    background:#0f1419;color:#94a3b8;
+    display:flex;align-items:center;justify-content:center;
+    height:100vh;text-align:center;padding:20px;line-height:1.6;}
+    .box{max-width:320px;}
+    .icon{font-size:48px;opacity:0.6;margin-bottom:10px;}
+    .title{font-weight:700;font-size:15px;color:#60a5fa;margin-bottom:6px;}
+  </style></head><body>
+    <div class="box">
+      <div class="icon">📦</div>
+      <div class="title">Sin vista previa</div>
+      <div>Abre una carpeta con prototipos o pega uno nuevo para verlo aquí.</div>
+    </div>
+  </body></html>`;
+}
+
+function refrescarPreview() {
+  const iframe = document.getElementById('preview');
+  let html;
+
+  if (modoPreview === 'completo') {
+    html = pedazos.map(p => p.contenido).join('\n');
+  } else {
+    html = (indiceActual >= 0 && pedazos[indiceActual]) ? pedazos[indiceActual].contenido : '';
+  }
+
+  if (!html || !html.trim()) {
+    iframe.srcdoc = placeholderHTML();
+  } else {
+    iframe.srcdoc = inyectarTapListener(html);
+  }
+}
+
+function alternarModoPreview() {
+  modoPreview = (modoPreview === 'completo') ? 'pedazo' : 'completo';
+  localStorage.setItem(LS_PREVIEW, modoPreview);
+  refrescarPreview();
+  actualizarBotonModoPreview();
+}
+
+function actualizarBotonModoPreview() {
+  const btn = document.getElementById('btnModeToggle');
+  if (!btn) return;
+  btn.textContent = modoPreview === 'completo' ? '👁 Completo' : '🔍 Solo versión';
+}
+
+/* =========================================================
+   ESTADO VISUAL
+   ========================================================= */
+function setEstado(clase, texto) {
+  const dot = document.getElementById('saveStatus');
+  const txt = document.getElementById('saveText');
+  dot.className = 'status-dot ' + clase;
+  txt.textContent = texto;
+}
+
+/* =========================================================
+   TECLADO EN PANTALLA
+   ========================================================= */
+const vv = window.visualViewport || null;
+let alturaTeclado = 0;
+let rafTeclado = null;
+
+function calcularAlturaTeclado() {
+  if (!vv) return 0;
+  const hueco = window.innerHeight - (vv.height + vv.offsetTop);
+  return hueco > 120 ? Math.round(hueco) : 0;
+}
+
+function aplicarAjusteTeclado() {
+  const dock = document.getElementById('bottomDock');
+  const fab  = document.getElementById('fabPegar');
+  if (!dock) return;
+
+  const altoDock = dock.offsetHeight || 230;
+
+  dock.style.bottom = alturaTeclado + 'px';
+  if (fab) fab.style.bottom = (altoDock + 14 + alturaTeclado) + 'px';
+  document.body.style.paddingBottom = (altoDock + 40 + alturaTeclado) + 'px';
+  document.body.classList.toggle('teclado-abierto', alturaTeclado > 0);
+}
+
+function programarAjusteTeclado() {
+  if (rafTeclado) return;
+  rafTeclado = requestAnimationFrame(() => {
+    rafTeclado = null;
+    alturaTeclado = calcularAlturaTeclado();
+    aplicarAjusteTeclado();
+  });
+}
+
+if (vv) {
+  vv.addEventListener('resize', programarAjusteTeclado);
+  vv.addEventListener('scroll', programarAjusteTeclado);
+}
+window.addEventListener('resize', programarAjusteTeclado);
+window.addEventListener('orientationchange', () => {
+  setTimeout(programarAjusteTeclado, 100);
+  setTimeout(programarAjusteTeclado, 350);
+});
+
+function reajustarTecladoConRetraso() {
+  [0, 80, 200, 400, 650].forEach(ms => setTimeout(programarAjusteTeclado, ms));
+}
+document.addEventListener('focusin',  reajustarTecladoConRetraso, true);
+document.addEventListener('focusout', reajustarTecladoConRetraso, true);
+
+/* =========================================================
+   LISTENERS GLOBALES
+   ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+
+  const qi = document.getElementById('quickInput');
+
+  qi.addEventListener('paste', (e) => {
+    const texto = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
+    if (texto && texto.trim()) {
+      e.preventDefault();
+      abrirModalNuevoPedazo(texto);
+      setTimeout(() => { qi.value = ''; qi.blur(); }, 0);
+    }
+  });
+
+  qi.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const texto = qi.value;
+      if (texto && texto.trim()) {
+        abrirModalNuevoPedazo(texto);
+        qi.value = '';
+        qi.blur();
+      }
+    }
+  });
+
+  document.getElementById('nombreNuevoPedazo').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const inp = e.target;
+      inp.readOnly = true;
+      document.getElementById('btnEditarNombre').textContent = '✏️ Editar';
+      inp.blur();
+    }
+  });
+
+  document.getElementById('modalNuevoPedazo').addEventListener('click', (e) => {
+    if (e.target.id === 'modalNuevoPedazo') cerrarModalNuevoPedazo();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modalNuevo = document.getElementById('modalNuevoPedazo');
+      if (modalNuevo.classList.contains('visible')) { cerrarModalNuevoPedazo(); return; }
+    }
+  });
+
+  programarAjusteTeclado();
+  setTimeout(programarAjusteTeclado, 300);
+});
+
+/* =========================================================
+   INTERCEPTOR GLOBAL DE PEGADO
+   ========================================================= */
+document.addEventListener('paste', (e) => {
+  const t = e.target;
+  const esEditable =
+    (t.tagName === 'INPUT' && t.type === 'text' && !t.readOnly) ||
+    (t.tagName === 'TEXTAREA' && !t.readOnly);
+
+  if (esEditable) return;
+
+  const texto = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
+  if (texto && texto.trim()) {
+    e.preventDefault();
+    abrirModalNuevoPedazo(texto);
+  }
+});
+
+/* =========================================================
+   SERVICE WORKER (PWA)
+   ========================================================= */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('Service Worker registrado.'))
+      .catch((err) => console.log('Fallo al registrar Service Worker:', err));
+  });
+}
+
+/* =========================================================
+   INICIALIZACIÓN
+   ========================================================= */
+(function init() {
+  const mp = localStorage.getItem(LS_PREVIEW);
+  if (mp === 'pedazo' || mp === 'completo') modoPreview = mp;
+  actualizarBotonModoPreview();
+
+  refrescarTodo();
+  programarAjusteTeclado();
+})();
+</script>
+
+</body>
+</html>
